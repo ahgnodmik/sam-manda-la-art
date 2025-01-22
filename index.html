@@ -122,13 +122,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 96px;
-            height: 96px;
-            padding: 8px;
+            width: 90%;
+            height: 90%;
+            padding: 4px;
             font-size: 16px;
             line-height: 1.3;
             overflow: hidden;
-            word-break: keep-all;
+            word-break: break-all;
             word-wrap: break-word;
             border: none;
             text-align: center;
@@ -138,31 +138,16 @@
             justify-content: center;
             align-items: center;
             cursor: text;
-            user-select: text;
+            white-space: pre-line;
             -webkit-user-modify: read-write;
-            overflow-wrap: break-word;
-            white-space: pre-wrap;
+            -webkit-line-break: after-white-space;
             background: transparent;
-        }
-
-        .text-container:empty::before {
-            content: "";
-            display: inline-block;
-            width: 0;
-            height: 1.2em;
-            vertical-align: middle;
+            font-family: 'Arial', sans-serif;
+            transition: font-size 0.2s ease;
         }
 
         .text-container:focus {
             outline: none;
-        }
-
-        [contenteditable="true"]:empty:before {
-            content: "";
-            display: inline-block;
-            width: 0;
-            height: 1.2em;
-            vertical-align: middle;
         }
 
         .quote-container {
@@ -284,6 +269,25 @@
             document.getElementById('clearBtn').addEventListener('click', clearAll);
         });
 
+        function adjustFontSize(element) {
+            const cell = element.parentElement;
+            const maxSize = 16;
+            const minSize = 8;
+            
+            // 초기 폰트 크기 설정
+            element.style.fontSize = maxSize + 'px';
+            
+            // 내용이 박스를 넘어가는지 확인하고 폰트 크기 조절
+            while (
+                (element.scrollHeight > cell.clientHeight ||
+                element.scrollWidth > cell.clientWidth) &&
+                parseInt(element.style.fontSize) > minSize
+            ) {
+                const currentSize = parseInt(element.style.fontSize);
+                element.style.fontSize = (currentSize - 1) + 'px';
+            }
+        }
+
         function createMandalArt() {
             const container = document.getElementById('mandalContainer');
             
@@ -299,26 +303,38 @@
                     const span = document.createElement('span');
                     span.className = 'text-container';
                     span.contentEditable = true;
-                    span.dataset.maxLength = '50';
-                    span.autocomplete = 'off';
+                    span.spellcheck = false;
                     
-                    span.addEventListener('paste', (e) => {
-                        e.preventDefault();
-                        const text = e.clipboardData.getData('text/plain');
-                        document.execCommand('insertText', false, text);
+                    // 입력 제한 처리
+                    span.addEventListener('input', function(e) {
+                        if (this.innerText.length > 20) {
+                            this.innerText = this.innerText.slice(0, 20);
+                            // 커서를 끝으로 이동
+                            const range = document.createRange();
+                            const sel = window.getSelection();
+                            range.selectNodeContents(this);
+                            range.collapse(false);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        }
+                        adjustFontSize(this);
                     });
 
+                    // 엔터 키 처리
                     span.addEventListener('keydown', function(e) {
-                        const text = this.innerText;
-                        if (text.length >= 50 && e.key !== 'Backspace' && e.key !== 'Delete') {
+                        if (e.key === 'Enter') {
                             e.preventDefault();
                         }
-                        if (e.key === 'Enter') {
-                            const lines = text.split('\n');
-                            if (lines.length >= 3) {
-                                e.preventDefault();
-                            }
-                        }
+                    });
+
+                    // 붙여넣기 처리
+                    span.addEventListener('paste', function(e) {
+                        e.preventDefault();
+                        let text = (e.clipboardData || window.clipboardData).getData('text');
+                        text = text.slice(0, 20);
+                        text = text.replace(/\n/g, '');
+                        document.execCommand('insertText', false, text);
+                        adjustFontSize(this);
                     });
                     
                     if (i === 4) {
@@ -331,13 +347,32 @@
                         span.contentEditable = false;
                     }
                     
-                    span.addEventListener('input', adjustFontSize);
-                    
                     cell.appendChild(span);
                     section.appendChild(cell);
                 }
                 
                 container.appendChild(section);
+            }
+        }
+
+        function updateSubCenters(event) {
+            const centerIndex = event.target.dataset.centerIndex;
+            if (!centerIndex) return;
+
+            const targetSpan = document.querySelector(`span[data-section-index="${centerIndex}"]`);
+            if (targetSpan) {
+                targetSpan.textContent = event.target.textContent;
+                adjustFontSize(targetSpan);
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all entries?')) {
+                const spans = document.querySelectorAll('.text-container');
+                spans.forEach(span => {
+                    span.textContent = '';
+                });
+                displayRandomQuote();
             }
         }
 
