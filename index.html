@@ -18,7 +18,13 @@
             align-items: center;
             background-color: #f5f5f5;
             padding: 20px;
-            min-height: 100vh;
+            height: 100vh;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
         }
 
         .header {
@@ -84,6 +90,10 @@
             padding: 24px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 95vw;
+            max-height: calc(100vh - 250px);
+            width: auto;
+            aspect-ratio: 1;
         }
 
         .mandal-section {
@@ -132,6 +142,10 @@
             writing-mode: horizontal-tb;
             text-align-last: center;
             vertical-align: middle;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .text-container::-webkit-scrollbar {
@@ -215,7 +229,7 @@
 <body>
     <div class="header">
         <h1>만다라트 차트 생성기</h1>
-        <div class="creator-info">제작 당사자: 석삼동 with claude</div>
+        <div class="creator-info">제작: 석삼동 with Claude</div>
     </div>
     
     <div class="controls">
