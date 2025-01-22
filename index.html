@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>만다라트 차트 생성기</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .header h1 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .creator-info {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: #1976D2;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #clearBtn {
+            background-color: #DC3545;
+        }
+
+        #clearBtn:hover {
+            background-color: #C82333;
+        }
+
+        .mandal-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .mandal-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .center-section {
+            background-color: #E3F2FD;
+        }
+
+        .mandal-cell {
+            aspect-ratio: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            min-width: 90px;
+            min-height: 90px;
+            position: relative;
+            background: white;
+        }
+
+        .text-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 4px;
+            font-size: 20px;
+            line-height: 1.2;
+            overflow: hidden;
+            word-break: break-all;
+            background: transparent;
+            border: none;
+            resize: none;
+        }
+
+        .text-container:focus {
+            outline: 2px solid #2196F3;
+        }
+
+        .main-cell {
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .main-cell .text-container {
+            font-weight: bold;
+        }
+
+        .center-main-cell .text-container {
+            font-weight: 900;
+            font-size: 24px;
+        }
+
+        .quote-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .quote-text {
+            font-size: 1.1em;
+            color: #333;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .quote-author {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        #capture-area {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .mandal-container {
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .mandal-cell {
+                min-width: 70px;
+                min-height: 70px;
+            }
+
+            .text-container {
+                font-size: 16px;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>만다라트 차트 생성기</h1>
+        <div class="creator-info">제작 당사자: 석삼동 with claude</div>
+    </div>
+    
+    <div class="controls">
+        <button id="saveJpg">
+            ⬇️ Download JPG
+        </button>
+        <button id="savePng">
+            ⬇️ Download PNG
+        </button>
+        <button id="clearBtn">
+            🗑️ Clear All
+        </button>
+    </div>
+
+    <div id="capture-area">
+        <div class="mandal-container" id="mandalContainer"></div>
+    </div>
+
+    <div class="quote-container">
+        <div class="quote-text" id="quoteText"></div>
+        <div class="quote-author" id="quoteAuthor"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // 명언 목록
+        const quotes = [
+            {
+                text: "모든 성취의 시작점은 갈망이다.",
+                author: "나폴레온 힐"
+            },
+            {
+                text: "당신이 할 수 있다고 믿으면 절반은 이미 시작된 것이다.",
+                author: "시어도어 루스벨트"
+            },
+            {
+                text: "매일 매일이 새로운 시작이다.",
+                author: "부다"
+            },
+            {
+                text: "미래는 지금 준비하는 사람의 것이다.",
+                author: "말콤 X"
+            },
+            {
+                text: "실패는 성공을 향해 가는 과정이다.",
+                author: "토마스 에디슨"
+            },
+            {
+                text: "시작하는 것이 완벽한 때는 없다. 지금이 바로 시작할 때다.",
+                author: "마리 포레오"
+            },
+            {
+                text: "작은 습관이 큰 변화를 만든다.",
+                author: "로버트 콜리어"
+            },
+            {
+                text: "목표를 높게 세워라. 그리고 거기에 도달할 때까지 멈추지 마라.",
+                author: "보그 밀러"
+            },
+            {
+                text: "당신의 인생을 변화시키고 싶다면, 당신의 선택을 변화시켜라.",
+                author: "짐 론"
+            },
+            {
+                text: "불가능이란 노력하지 않는 사람들의 변명이다.",
+                author: "존 키츠"
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            createMandalArt();
+            displayRandomQuote();
+            
+            document.getElementById('saveJpg').addEventListener('click', () => saveAsImage('jpeg'));
+            document.getElementById('savePng').addEventListener('click', () => saveAsImage('png'));
+            document.getElementById('clearBtn').addEventListener('click', clearAll);
+        });
+
+        function createMandalArt() {
+            const container = document.getElementById('mandalContainer');
+            
+            for (let i = 0; i < 9; i++) {
+                const section = document.createElement('div');
+                section.className = 'mandal-section';
+                if (i === 4) section.classList.add('center-section');
+                
+                for (let j = 0; j < 9; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'mandal-cell';
+                    
+                    const textarea = document.createElement('textarea');
+                    textarea.className = 'text-container';
+                    textarea.maxLength = 50;
+                    textarea.spellcheck = false;
+                    
+                    if (j === 4) {
+                        cell.classList.add('main-cell');
+                    }
+                    
+                    if (i === 4) {
+                        textarea.dataset.centerIndex = j;
+                        textarea.addEventListener('input', updateSubCenters);
+                        if (j === 4) {
+                            cell.classList.add('center-main-cell');
+                        }
+                    }
+
+                    if (j === 4 && i !== 4) {
+                        textarea.dataset.sectionIndex = i;
+                        textarea.readOnly = true;
+                    }
+                    
+                    textarea.addEventListener('input', adjustFontSize);
+                    
+                    cell.appendChild(textarea);
+                    section.appendChild(cell);
+                }
+                
+                container.appendChild(section);
+            }
+        }
+
+        function adjustFontSize(event) {
+            const textarea = event.target;
+            const cell = textarea.parentElement;
+            const maxSize = cell.classList.contains('center-main-cell') ? 24 : 20;
+            const minSize = 8;
+            
+            textarea.style.fontSize = maxSize + 'px';
+            
+            while (
+                (textarea.scrollHeight > textarea.clientHeight ||
+                textarea.scrollWidth > textarea.clientWidth) &&
+                parseInt(textarea.style.fontSize) > minSize
+            ) {
+                const currentSize = parseInt(textarea.style.fontSize);
+                textarea.style.fontSize = (currentSize - 1) + 'px';
+            }
+        }
+
+        function updateSubCenters(event) {
+            const centerIndex = event.target.dataset.centerIndex;
+            if (!centerIndex) return;
+
+            const targetIndex = centerIndex;
+            const targetTextarea = document.querySelector(`textarea[data-section-index="${targetIndex}"]`);
+            
+            if (targetTextarea) {
+                targetTextarea.value = event.target.value;
+                adjustFontSize({ target: targetTextarea });
+            }
+        }
+
+        function displayRandomQuote() {
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            const quote = quotes[randomIndex];
+            
+            document.getElementById('quoteText').textContent = `"${quote.text}"`;
+            document.getElementById('quoteAuthor').textContent = `- ${quote.author}`;
+        }
+
+        async function saveAsImage(format) {
+            try {
+                const captureArea = document.getElementById('capture-area');
+                const canvas = await html2canvas(captureArea, {
+                    backgroundColor: 'white',
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                });
+
+                const link = document.createElement('a');
+                link.download = `mandal-art.${format}`;
+                link.href = canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined);
+                link.click();
+            } catch (error) {
+                console.error('Error saving image:', error);
+                alert('이미지 저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all entries?')) {
+                const textareas = document.querySelectorAll('textarea');
+                textareas.forEach(textarea => {
+                    textarea.value = '';
+                    textarea.style.fontSize = textarea.parentElement.classList.contains('center-main-cell') ? '24px' : '20px';
+                });
+                displayRandomQuote();
+            }
+        }
+    </script>
+</body>
+</html>
