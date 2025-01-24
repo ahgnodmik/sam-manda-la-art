@@ -142,6 +142,22 @@ button:active {
     outline: none;
 }
 
+/* 새로 추가된 스타일 */
+.center-goal {
+    color: #800020 !important; /* 버건디 색상 */
+    font-weight: bold !important;
+}
+
+.text-container[data-placeholder]:empty:before {
+    content: attr(data-placeholder);
+    color: #999;
+    font-style: italic;
+}
+
+.text-container:focus[data-placeholder]:empty:before {
+    content: "";
+}
+
 .quote-container {
     margin: 0;
     padding: 8px 0;

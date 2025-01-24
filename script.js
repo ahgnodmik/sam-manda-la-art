@@ -1,8 +1,7 @@
-// 스와이프 처리를 위한 변수들
 let startX = 0;
 let startY = 0;
-let currentSection = 4; // 중앙 섹션
-const threshold = 50; // 스와이프 감지 임계값
+let currentSection = 4;
+const threshold = 50;
 
 function createMandalArt() {
     const container = document.getElementById('mandalContainer');
@@ -21,7 +20,24 @@ function createMandalArt() {
             span.contentEditable = true;
             span.spellcheck = false;
             
-            // 중앙 섹션의 각 셀에 인덱스 설정
+            // 중앙 셀 설정
+            if (i === 4 && j === 4) {
+                span.classList.add('center-goal');
+                span.dataset.placeholder = '최종목표';
+                span.addEventListener('focus', function() {
+                    if (this.textContent === this.dataset.placeholder) {
+                        this.textContent = '';
+                    }
+                });
+                span.addEventListener('blur', function() {
+                    if (this.textContent.trim() === '') {
+                        this.textContent = this.dataset.placeholder;
+                    }
+                });
+                span.textContent = '최종목표';
+            }
+            
+            // 중앙 섹션 셀 설정
             if (i === 4) {
                 span.dataset.centerIndex = j.toString();
                 span.addEventListener('input', function() {
@@ -34,7 +50,7 @@ function createMandalArt() {
                 });
             }
 
-            // 각 섹션의 중앙 셀에 인덱스 설정
+            // 각 섹션의 중앙 셀 설정
             if (j === 4 && i !== 4) {
                 span.dataset.sectionIndex = i.toString();
                 span.contentEditable = false;
@@ -54,19 +70,11 @@ function createMandalArt() {
                 adjustFontSize(this);
             });
 
-            // 엔터 키 방지
-            span.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                }
-            });
-
             // 붙여넣기 처리
             span.addEventListener('paste', function(e) {
                 e.preventDefault();
                 let text = (e.clipboardData || window.clipboardData).getData('text');
                 text = text.slice(0, 20);
-                text = text.replace(/\n/g, '');
                 document.execCommand('insertText', false, text);
                 adjustFontSize(this);
             });
@@ -133,17 +141,20 @@ async function saveAsImage(format) {
 }
 
 function clearAll() {
-    if (confirm('Are you sure you want to clear all entries?')) {
+    if (confirm('모든 입력을 지우시겠습니까?')) {
         const spans = document.querySelectorAll('.text-container');
         spans.forEach(span => {
-            span.textContent = '';
+            if (span.classList.contains('center-goal')) {
+                span.textContent = '최종목표';
+            } else {
+                span.textContent = '';
+            }
             span.style.fontSize = '16px';
         });
         displayRandomQuote();
     }
 }
 
-// 모바일 스와이프 기능
 function initSwipeControl() {
     const container = document.querySelector('.mandal-container');
     
@@ -213,7 +224,6 @@ function moveToSection(direction) {
     }
 }
 
-// 초기화
 document.addEventListener('DOMContentLoaded', function() {
     createMandalArt();
     displayRandomQuote();
